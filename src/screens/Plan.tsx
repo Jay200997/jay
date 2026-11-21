@@ -3,7 +3,7 @@ import { useStore } from '../lib/store';
 import { dateKey, programWeek, weekdayIndex, DAY_NAMES } from '../lib/date';
 import { seedPlan, uid } from '../lib/seed';
 import { MEAL_SLOTS, type DayPlan, type MealSlot } from '../lib/types';
-import { Button, Card, Input, ScreenHeader } from '../ui';
+import { Button, Card, ConfirmButton, Input, ScreenHeader } from '../ui';
 import { exerciseDetail } from './Today';
 
 export default function Plan() {
@@ -63,15 +63,12 @@ export default function Plan() {
       })}
 
       {editing && (
-        <Button
-          variant="danger"
+        <ConfirmButton
           className="w-full"
-          onClick={() => {
-            if (confirm('Reset the whole weekly plan to the default? Your logs stay, but ticks for edited items will be lost.')) update((d) => ({ ...d, plan: seedPlan() }));
-          }}
-        >
-          Reset plan to default
-        </Button>
+          label="Reset plan to default"
+          confirmLabel="Tap again to reset the plan"
+          onConfirm={() => update((d) => ({ ...d, plan: seedPlan() }))}
+        />
       )}
     </>
   );

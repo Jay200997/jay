@@ -3,7 +3,7 @@ import { useStore } from '../lib/store';
 import { addDays, formatShort, programWeek } from '../lib/date';
 import { seedGoals, uid } from '../lib/seed';
 import type { GoalWeek } from '../lib/types';
-import { Button, Card, CheckRow, Input, Progress, ScreenHeader } from '../ui';
+import { Button, Card, CheckRow, ConfirmButton, Input, Progress, ScreenHeader } from '../ui';
 
 export default function Goals() {
   const { data, update } = useStore();
@@ -77,9 +77,12 @@ export default function Goals() {
       })}
 
       {editing && (
-        <Button variant="danger" className="w-full" onClick={() => confirm('Reset all goals to defaults? Ticks will be cleared.') && update((d) => ({ ...d, goals: seedGoals(), goalsDone: {} }))}>
-          Reset goals to default
-        </Button>
+        <ConfirmButton
+          className="w-full"
+          label="Reset goals to default"
+          confirmLabel="Tap again to reset goals"
+          onConfirm={() => update((d) => ({ ...d, goals: seedGoals(), goalsDone: {} }))}
+        />
       )}
     </>
   );

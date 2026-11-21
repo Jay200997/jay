@@ -17,6 +17,8 @@ Streaks and the "never miss two in a row" warning show on Today. If your weekly 
 
 Requires Node 18+.
 
+`npm run build:single` builds the whole app as one self-contained `dist-single/index.html` (no service worker), for hosting as a single page.
+
 ```bash
 npm install
 npm run dev        # http://localhost:5173 (add --host to open it from your phone on the same Wi-Fi)

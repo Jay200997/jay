@@ -1,4 +1,4 @@
-import type { ReactNode, InputHTMLAttributes, ButtonHTMLAttributes } from 'react';
+import { useEffect, useState, type ReactNode, type InputHTMLAttributes, type ButtonHTMLAttributes } from 'react';
 
 export function Card({ title, right, children, className = '' }: { title?: ReactNode; right?: ReactNode; children: ReactNode; className?: string }) {
   return (
@@ -94,5 +94,29 @@ export function ScreenHeader({ title, sub }: { title: string; sub?: ReactNode })
       <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
       {sub && <p className="text-slate-400 text-sm mt-0.5">{sub}</p>}
     </header>
+  );
+}
+
+/** Two-tap confirmation (native confirm() dialogs are blocked in some embedded viewers). */
+export function ConfirmButton({ label, confirmLabel, onConfirm, className = '' }: { label: string; confirmLabel: string; onConfirm: () => void; className?: string }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(false), 4000);
+    return () => clearTimeout(t);
+  }, [armed]);
+  return (
+    <Button
+      variant="danger"
+      className={`${armed ? '!bg-rose-600 !text-white font-semibold' : ''} ${className}`}
+      onClick={() => {
+        if (armed) {
+          setArmed(false);
+          onConfirm();
+        } else setArmed(true);
+      }}
+    >
+      {armed ? confirmLabel : label}
+    </Button>
   );
 }

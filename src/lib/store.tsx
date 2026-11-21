@@ -55,7 +55,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (first.current) {
       first.current = false;
       // Ask the browser not to evict our storage.
-      navigator.storage?.persist?.().catch(() => {});
+      try {
+        navigator.storage?.persist?.().catch(() => {});
+      } catch {
+        /* not supported */
+      }
     }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
