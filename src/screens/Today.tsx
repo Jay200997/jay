@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { useStore, emptyLog } from '../lib/store';
 import { addDays, dateKey, daysBetween, formatLong, formatShort, programWeek, weekdayIndex, DAY_NAMES } from '../lib/date';
-import { longRunKm } from '../lib/seed';
+import { resolveDetail } from '../lib/seed';
 import { MEAL_SLOTS } from '../lib/types';
 import { currentStreak, missedInARow, recentLossRate, FAST_LOSS_KG_PER_WEEK } from '../lib/stats';
 import { Banner, Button, Card, CheckRow, Input, Progress } from '../ui';
 
-export function exerciseDetail(detail: string, week: number): string {
-  return detail.replace('{longrun}', `${longRunKm(Math.max(1, week)).toFixed(1)} km`);
-}
+export const exerciseDetail = resolveDetail;
 
 export default function Today() {
   const { data, updateLog } = useStore();

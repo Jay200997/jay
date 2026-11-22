@@ -73,9 +73,13 @@ export function buildPrompt(data: AppData, note: string): string {
   return `You are a careful, encouraging fitness coach reviewing a progress check-in for a fitness tracker app.
 
 PERSON
-- 5'5" (165 cm), started at 70 kg. Goal 64–66 kg, waist under 32 in, keep muscle.
-- Indian vegetarian diet plus eggs, ~1,900–2,000 kcal and 110–130 g protein/day.
-- Training: running + light strength + mobility. No heavy lifting.
+- 5'5" (165 cm), age 25–34, started at 70 kg. Goal 64–66 kg, waist under 32 in.
+- Look goal: lean and athletic, a little more upper-body size (chest, shoulders, back) and visible abs; does NOT want a bulky look.
+- Started able to run 20+ min, 20+ push-ups, 4+ pull-ups. Full gym access; trains 5 days × 45–60 min.
+- KNEE: pain just below the kneecap (likely patellar tendon) when running a lot. Plan uses daily isometric holds and slow heavy leg press/extension. Never suggest jumping, plyometrics, downhill running or big jumps in running volume; pain must stay ≤ 3/10 and settle by next morning.
+- Tight hips/hip flexors, hamstrings/lower back, calves/ankles and shoulders/upper back; flexibility is a goal.
+- Indian vegetarian diet plus eggs, ~2,060 kcal and ~147 g protein/day (kept on purpose; adjust only from the weekly weight trend).
+- Training: 3 gym days (moderate weights, 6–12 reps, 1–2 reps short of failure), Tuesday intervals, Saturday long easy run, Thursday mobility.
 
 CONTEXT
 - Today ${today}, programme week ${week || 'not started'} (12-week plan, then months 4–6).
@@ -85,7 +89,7 @@ CONTEXT
 - Recent runs: ${runs.length ? runs.map((r) => `${r.date}: ${r.km} km in ${formatDuration(r.seconds)}`).join('; ') : 'none logged'}.
 - Note from the person: ${note.trim() || '(none)'}
 
-WEEKLY WORKOUT PLAN (day index, then [exerciseId] name | sets/reps; "{longrun}" is an auto-calculated distance, keep it)
+WEEKLY WORKOUT PLAN (day index, then [exerciseId] name | sets/reps; "{longrun}", "{intervals}" and "{kneereps}" are auto-progressed by week, keep them)
 ${plan}
 
 REMAINING GOALS ([goalWeekId] label, then [goalId] text)
@@ -95,7 +99,7 @@ THE PHOTO(S)
 The attached photo(s) are the person's progress picture(s). Describe only what is visible and relevant to training: posture, visible muscle tone, where fat appears to be carried, and anything that suggests a focus area. Give any body-fat estimate only as a broad range and say it is a rough visual guess. Be neutral and kind; no judgement about appearance. If the photo is not a body/progress photo (e.g. a meal or a screenshot), analyse what it shows in a way that helps their plan instead.
 
 TASK
-Based on the photo(s) AND the logged data, suggest a SMALL number of concrete, conservative updates (0–6 total) to the goals and workout tasks. Only suggest a change if it clearly helps; it is fine to change nothing. Keep the "no heavy lifting" constraint. Refer to existing items only by the ids shown above.
+Based on the photo(s) AND the logged data, suggest a SMALL number of concrete, conservative updates (0–6 total) to the goals and workout tasks. Only suggest a change if it clearly helps; it is fine to change nothing. Respect the knee limits above. Refer to existing items only by the ids shown above.
 
 Reply with ONLY a JSON object of this shape:
 {

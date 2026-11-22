@@ -91,7 +91,7 @@ function DayEditor({ day, onChange }: { day: DayPlan; onChange: (fn: (d: DayPlan
           ))}
         </div>
         <Button variant="soft" className="w-full mt-2" onClick={() => onChange((d) => ({ ...d, exercises: [...d.exercises, { id: uid('ex'), name: '', detail: '' }] }))}>+ Add exercise</Button>
-        <p className="text-xs text-slate-500 mt-1">Tip: write <code>{'{longrun}'}</code> in the sets field to auto-show this week's long-run distance.</p>
+        <p className="text-xs text-slate-500 mt-1">Tip: in the sets field, <code>{'{longrun}'}</code>, <code>{'{intervals}'}</code> and <code>{'{kneereps}'}</code> fill in automatically for the current week.</p>
       </div>
 
       <div>
