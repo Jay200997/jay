@@ -11,7 +11,8 @@ export default function Goals() {
   const week = programWeek(data.settings.startDate);
   const currentRef = useRef<HTMLDivElement>(null);
 
-  const isCurrent = (g: GoalWeek) => (g.week !== null ? g.week === week : week > 12);
+  // Before Day 1, highlight Week 1 as up next.
+  const isCurrent = (g: GoalWeek) => (g.week !== null ? g.week === Math.max(1, week) : week > 12);
 
   useEffect(() => {
     currentRef.current?.scrollIntoView({ block: 'center' });
@@ -44,7 +45,7 @@ export default function Goals() {
               title={
                 <span>
                   {g.label}
-                  {cur && <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 align-middle">This week</span>}
+                  {cur && <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 align-middle">{week === 0 ? 'Up next' : 'This week'}</span>}
                 </span>
               }
               right={<span className="text-xs text-slate-500">from {formatShort(start)}</span>}

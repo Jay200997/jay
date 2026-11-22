@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStore, emptyLog } from '../lib/store';
-import { addDays, dateKey, formatLong, programWeek, weekdayIndex, DAY_NAMES } from '../lib/date';
+import { addDays, dateKey, daysBetween, formatLong, formatShort, programWeek, weekdayIndex, DAY_NAMES } from '../lib/date';
 import { longRunKm } from '../lib/seed';
 import { MEAL_SLOTS } from '../lib/types';
 import { currentStreak, missedInARow, recentLossRate, FAST_LOSS_KG_PER_WEEK } from '../lib/stats';
@@ -15,6 +15,8 @@ export default function Today() {
   const today = dateKey();
   const [day, setDay] = useState(today);
   const isToday = day === today;
+  const isFuture = day > today;
+  const dayNum = daysBetween(data.settings.startDate, day) + 1;
 
   const idx = weekdayIndex(day);
   const plan = data.plan[idx];
@@ -40,14 +42,21 @@ export default function Today() {
       <header className="pt-2 flex items-start justify-between gap-2">
         <div>
           <p className="text-emerald-400 text-sm font-medium">
-            {week > 0 ? `Week ${week}` : 'Programme not started'} · {DAY_NAMES[idx]}
+            {dayNum >= 1 ? `Day ${dayNum} · Week ${week}` : `Day 1 is ${formatShort(data.settings.startDate)}`} · {DAY_NAMES[idx]}
           </p>
           <h1 className="text-2xl font-bold tracking-tight">{plan.title}</h1>
-          <p className="text-slate-400 text-sm">{isToday ? 'Today' : formatLong(day)}</p>
+          <p className="text-slate-400 text-sm">
+            {isToday ? 'Today' : day === addDays(today, 1) ? 'Tomorrow' : formatLong(day)}
+            {!isToday && (
+              <button type="button" className="ml-2 text-emerald-400 underline underline-offset-2 min-h-[32px]" onClick={() => setDay(today)}>
+                Back to today
+              </button>
+            )}
+          </p>
         </div>
         <div className="flex gap-1">
           <button aria-label="Previous day" className="w-11 h-11 rounded-xl bg-slate-800 active:bg-slate-700 text-xl" onClick={() => setDay(addDays(day, -1))}>‹</button>
-          <button aria-label="Next day" disabled={isToday} className="w-11 h-11 rounded-xl bg-slate-800 active:bg-slate-700 text-xl disabled:opacity-30" onClick={() => setDay(addDays(day, 1))}>›</button>
+          <button aria-label="Next day" className="w-11 h-11 rounded-xl bg-slate-800 active:bg-slate-700 text-xl disabled:opacity-30" onClick={() => setDay(addDays(day, 1))}>›</button>
         </div>
       </header>
 
@@ -153,7 +162,9 @@ export default function Today() {
         {log.sleepHours !== null && log.sleepHours < 7 && <p className="text-amber-300 text-sm mt-2">Aim for 7–9 h — recovery drives fat loss and muscle retention.</p>}
       </Card>
 
+      {isFuture && <p className="text-center text-sm text-slate-400">Preview of {formatLong(day)}. You can mark it complete on the day.</p>}
       <Button
+        disabled={isFuture}
         className={`w-full !min-h-[60px] text-lg ${log.complete ? '!bg-slate-800 !text-emerald-400' : ''}`}
         onClick={() => updateLog(day, (l) => ({ ...l, complete: !l.complete }))}
       >

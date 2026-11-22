@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { AppData, DayLog } from './types';
-import { seedData } from './seed';
+import { seedData, DEFAULT_START_DATE, START_MIGRATION } from './seed';
 
 const STORAGE_KEY = 'fittrack:v1';
 
@@ -22,15 +22,23 @@ export function normalize(raw: unknown): AppData {
     runs: Array.isArray(r.runs) ? r.runs : [],
     goals: Array.isArray(r.goals) ? r.goals : base.goals,
     goalsDone: r.goalsDone && typeof r.goalsDone === 'object' ? r.goalsDone : {},
-    settings: { ...base.settings, ...(r.settings ?? {}) },
+    // Migrations come only from the stored data, never from the fresh defaults.
+    settings: { ...base.settings, ...(r.settings ?? {}), migrations: r.settings?.migrations ?? [] },
     checkins: Array.isArray(r.checkins) ? r.checkins : [],
   };
+}
+
+/** Applies one-time updates. Runs on every load but each update only once per device. */
+function migrate(d: AppData): AppData {
+  const done = d.settings.migrations ?? [];
+  if (done.includes(START_MIGRATION)) return d;
+  return { ...d, settings: { ...d.settings, startDate: DEFAULT_START_DATE, migrations: [...done, START_MIGRATION] } };
 }
 
 function load(): AppData {
   try {
     const s = localStorage.getItem(STORAGE_KEY);
-    if (s) return normalize(JSON.parse(s));
+    if (s) return migrate(normalize(JSON.parse(s)));
   } catch {
     /* fall through to seed */
   }
@@ -70,7 +78,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [data]);
 
   const update = useCallback((fn: Updater) => setData((d) => fn(d)), []);
-  const replace = useCallback((d: AppData) => setData(normalize(d)), []);
+  // A restored backup keeps its own start date: mark the one-time update as done.
+  const replace = useCallback((d: AppData) => {
+    const n = normalize(d);
+    const done = n.settings.migrations ?? [];
+    setData({ ...n, settings: { ...n.settings, migrations: done.includes(START_MIGRATION) ? done : [...done, START_MIGRATION] } });
+  }, []);
   const updateLog = useCallback(
     (key: string, fn: (log: DayLog) => DayLog) =>
       setData((d) => ({ ...d, logs: { ...d.logs, [key]: fn(d.logs[key] ?? emptyLog()) } })),

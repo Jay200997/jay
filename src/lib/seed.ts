@@ -1,5 +1,7 @@
 import type { AppData, DayPlan, Exercise, GoalWeek, Meal, MealSlot } from './types';
-import { dateKey, mondayOf } from './date';
+/** Day 1 of the programme. */
+export const DEFAULT_START_DATE = '2026-11-23';
+export const START_MIGRATION = 'start-2026-11-23';
 
 let counter = 0;
 export function uid(prefix = 'id'): string {
@@ -141,7 +143,7 @@ export function seedData(): AppData {
     runs: [],
     goals: seedGoals(),
     goalsDone: {},
-    settings: { startDate: mondayOf(dateKey()), waterTargetMl: 3000 },
+    settings: { startDate: DEFAULT_START_DATE, waterTargetMl: 3000, migrations: [START_MIGRATION] },
     checkins: [],
   };
 }

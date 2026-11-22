@@ -41,6 +41,8 @@ export interface GoalWeek { id: string; label: string; week: number | null; item
 export interface Settings {
   startDate: string; // YYYY-MM-DD
   waterTargetMl: number;
+  /** One-time data updates already applied on this device. */
+  migrations?: string[];
 }
 
 export interface CheckIn {
