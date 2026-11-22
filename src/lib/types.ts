@@ -43,6 +43,14 @@ export interface Settings {
   waterTargetMl: number;
 }
 
+export interface CheckIn {
+  id: string;
+  date: string;
+  summary: string;
+  observations: string[];
+  applied: string[]; // human-readable list of changes that were applied
+}
+
 export interface AppData {
   version: 1;
   plan: WeekPlan;
@@ -53,4 +61,5 @@ export interface AppData {
   goals: GoalWeek[];
   goalsDone: Record<string, boolean>;
   settings: Settings;
+  checkins: CheckIn[];
 }

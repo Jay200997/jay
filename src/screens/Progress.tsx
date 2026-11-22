@@ -5,6 +5,7 @@ import { addDays, dateKey, formatDuration, formatShort, parseDuration, paceStrin
 import { uid } from '../lib/seed';
 import { recentLossRate, weeklyAverages, FAST_LOSS_KG_PER_WEEK } from '../lib/stats';
 import { Banner, Button, Card, Field, Input, ScreenHeader } from '../ui';
+import PhotoCheckin from './PhotoCheckin';
 
 const INK = '#94a3b8';
 const GRID = '#1e293b';
@@ -51,6 +52,8 @@ export default function ProgressScreen() {
           Losing {lossRate.toFixed(2)} kg/week (target ≤ {FAST_LOSS_KG_PER_WEEK}). <strong>Add food to protect muscle</strong> — e.g. +1 roti or +150 g curd a day.
         </Banner>
       )}
+
+      <PhotoCheckin />
 
       <Card title="Weight" right={<span className={`text-sm ${weighInsThisWeek >= 3 ? 'text-emerald-400' : 'text-slate-400'}`}>{weighInsThisWeek}/3 this week</span>}>
         <QuickLog

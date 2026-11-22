@@ -23,6 +23,7 @@ export function normalize(raw: unknown): AppData {
     goals: Array.isArray(r.goals) ? r.goals : base.goals,
     goalsDone: r.goalsDone && typeof r.goalsDone === 'object' ? r.goalsDone : {},
     settings: { ...base.settings, ...(r.settings ?? {}) },
+    checkins: Array.isArray(r.checkins) ? r.checkins : [],
   };
 }
 

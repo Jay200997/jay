@@ -7,7 +7,7 @@ Installable as a PWA.
 ## Screens
 - **Today** — auto-picks today's workout + meals as tickable checklists, kcal/protein running totals, water (+250 ml, 3 L target), sleep hours, *Mark day complete*. Use ‹ › to backfill earlier days.
 - **Plan** — all 7 days; tap **Edit** to change titles, exercises, meals, kcal and protein.
-- **Progress** — weight log + weekly averages + chart, waist log (every 2 weeks) + chart, run log with automatic pace.
+- **Progress** — photo check-in (AI analysis of a progress photo + your logs, with suggested goal/workout changes you approve; available in the claude.ai-hosted version only), weight log + weekly averages + chart, waist log (every 2 weeks) + chart, run log with automatic pace.
 - **Goals** — week-by-week checklist; the current week is highlighted from your start date.
 - **Settings** — start date, water target, export/import JSON backup, reset.
 

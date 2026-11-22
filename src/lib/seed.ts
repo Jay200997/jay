@@ -142,6 +142,7 @@ export function seedData(): AppData {
     goals: seedGoals(),
     goalsDone: {},
     settings: { startDate: mondayOf(dateKey()), waterTargetMl: 3000 },
+    checkins: [],
   };
 }
 

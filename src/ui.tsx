@@ -14,7 +14,7 @@ export function Card({ title, right, children, className = '' }: { title?: React
   );
 }
 
-export function CheckRow({ checked, onToggle, label, sub, right }: { checked: boolean; onToggle: () => void; label: ReactNode; sub?: ReactNode; right?: ReactNode }) {
+export function CheckRow({ checked, onToggle, label, sub, right, strike = true }: { checked: boolean; onToggle: () => void; label: ReactNode; sub?: ReactNode; right?: ReactNode; strike?: boolean }) {
   return (
     <button
       type="button"
@@ -34,7 +34,7 @@ export function CheckRow({ checked, onToggle, label, sub, right }: { checked: bo
         )}
       </span>
       <span className="flex-1 min-w-0">
-        <span className={`block leading-snug ${checked ? 'text-slate-500 line-through' : 'text-slate-100'}`}>{label}</span>
+        <span className={`block leading-snug ${checked && strike ? 'text-slate-500 line-through' : 'text-slate-100'}`}>{label}</span>
         {sub && <span className="block text-sm text-slate-400 mt-0.5">{sub}</span>}
       </span>
       {right && <span className="shrink-0 text-sm text-slate-400 text-right">{right}</span>}
