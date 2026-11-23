@@ -49,7 +49,7 @@ export default function Plan() {
                 <div className="border-t border-slate-800 pt-3 space-y-1.5">
                   {day.meals.map((m) => (
                     <div key={m.id} className="flex justify-between gap-3 text-sm">
-                      <span><span className="text-slate-500">{m.slot}: </span>{m.name}</span>
+                      <span><span className="text-slate-500">{m.slot}: </span>{m.name}{m.fromWeek ? <span className="text-slate-500"> (from Week {m.fromWeek})</span> : null}</span>
                       {m.slot !== 'Supplements' && <span className="text-slate-400 shrink-0 tabular-nums">{m.kcal} / {m.protein} g</span>}
                     </div>
                   ))}

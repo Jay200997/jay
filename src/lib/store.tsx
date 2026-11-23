@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { AppData, DayLog } from './types';
-import { seedData, seedGoals, seedPlan, DEFAULT_START_DATE, START_MIGRATION, PLAN_V2_MIGRATION } from './seed';
+import { seedData, seedGoals, seedPlan, DEFAULT_START_DATE, START_MIGRATION, PLAN_V2_MIGRATION, CHEAT_MEAL_MIGRATION, cheatMeal } from './seed';
 
 const STORAGE_KEY = 'fittrack:v1';
 
@@ -38,6 +38,11 @@ function migrate(d: AppData): AppData {
   if (!has(START_MIGRATION)) mark(START_MIGRATION, {}, { startDate: DEFAULT_START_DATE });
   // New plan and goals replace the originals; logs, weights, runs and check-ins are kept.
   if (!has(PLAN_V2_MIGRATION)) mark(PLAN_V2_MIGRATION, { plan: seedPlan(), goals: seedGoals(), goalsDone: {} });
+  // Adds the Saturday cheat meal without touching any other edits to the plan.
+  if (!has(CHEAT_MEAL_MIGRATION)) {
+    const plan = out.plan.map((day, i) => (i === 5 && !day.meals.some((m) => m.fromWeek) ? { ...day, meals: [...day.meals, cheatMeal()] } : day));
+    mark(CHEAT_MEAL_MIGRATION, { plan });
+  }
   return out;
 }
 
@@ -88,7 +93,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const replace = useCallback((d: AppData) => {
     const n = normalize(d);
     const done = n.settings.migrations ?? [];
-    setData({ ...n, settings: { ...n.settings, migrations: [...new Set([...done, START_MIGRATION, PLAN_V2_MIGRATION])] } });
+    setData({ ...n, settings: { ...n.settings, migrations: [...new Set([...done, START_MIGRATION, PLAN_V2_MIGRATION, CHEAT_MEAL_MIGRATION])] } });
   }, []);
   const updateLog = useCallback(
     (key: string, fn: (log: DayLog) => DayLog) =>

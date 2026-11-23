@@ -13,6 +13,8 @@ export interface Meal {
   name: string;
   kcal: number;
   protein: number;
+  /** Only shown from this programme week onwards (e.g. the weekly cheat meal). */
+  fromWeek?: number;
 }
 
 export interface DayPlan {

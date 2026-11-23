@@ -4,6 +4,7 @@ export const DEFAULT_START_DATE = '2026-11-23';
 export const START_MIGRATION = 'start-2026-11-23';
 /** Gym + knee + mobility plan agreed on 22 Nov 2026. */
 export const PLAN_V2_MIGRATION = 'plan-v2';
+export const CHEAT_MEAL_MIGRATION = 'cheat-meal';
 
 let counter = 0;
 export function uid(prefix = 'id'): string {
@@ -29,6 +30,11 @@ const evening = () => meal('Evening', '3 whole eggs + 1 fruit', 280, 18);
 const dinner = () => meal('Dinner', '7 egg whites + 2 rotis + big bowl of sabzi', 400, 32);
 const dinnerCurd = () => meal('Dinner', '7 egg whites + 1 roti + 200 g curd + big bowl of sabzi', 400, 36);
 const preRunBanana = () => meal('Breakfast', 'Banana before the run', 105, 1);
+/** Weekly cheat meal: Saturday dinner from Week 3, on top of the normal dinner. */
+export const cheatMeal = (): Meal => ({
+  ...meal('Dinner', 'Cheat meal: one restaurant meal + 1 dessert (keep some protein, go easy on alcohol)', 900, 15),
+  fromWeek: 3,
+});
 const supplements = () => [
   meal('Supplements', 'Creatine (3–5 g)', 0, 0),
   meal('Supplements', 'Omega-3', 0, 0),
@@ -132,7 +138,7 @@ export function seedPlan(): DayPlan[] {
         ex('Long easy run, conversational pace (short quick steps, no downhill)', '{longrun}'),
         stretch(),
       ],
-      meals: [preRunBanana(), breakfast(), lunchBigRice(), evening(), dinner(), ...supplements()],
+      meals: [preRunBanana(), breakfast(), lunchBigRice(), evening(), dinner(), cheatMeal(), ...supplements()],
     },
     {
       title: 'Rest + check-in',
@@ -214,7 +220,7 @@ export function seedData(): AppData {
     runs: [],
     goals: seedGoals(),
     goalsDone: {},
-    settings: { startDate: DEFAULT_START_DATE, waterTargetMl: 3000, migrations: [START_MIGRATION, PLAN_V2_MIGRATION] },
+    settings: { startDate: DEFAULT_START_DATE, waterTargetMl: 3000, migrations: [START_MIGRATION, PLAN_V2_MIGRATION, CHEAT_MEAL_MIGRATION] },
     checkins: [],
   };
 }

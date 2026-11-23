@@ -25,7 +25,8 @@ export default function Today() {
   const toggle = (id: string) => updateLog(day, (l) => ({ ...l, checked: { ...l.checked, [id]: !l.checked[id] } }));
 
   const exDone = plan.exercises.filter((e) => log.checked[e.id]).length;
-  const food = plan.meals.filter((m) => m.slot !== 'Supplements');
+  const meals = plan.meals.filter((m) => !m.fromWeek || week >= m.fromWeek);
+  const food = meals.filter((m) => m.slot !== 'Supplements');
   const planned = food.reduce((a, m) => ({ kcal: a.kcal + m.kcal, protein: a.protein + m.protein }), { kcal: 0, protein: 0 });
   const eaten = food
     .filter((m) => log.checked[m.id])
@@ -111,7 +112,7 @@ export default function Today() {
           </div>
         </div>
         {MEAL_SLOTS.map((slot) => {
-          const items = plan.meals.filter((m) => m.slot === slot);
+          const items = meals.filter((m) => m.slot === slot);
           if (!items.length) return null;
           return (
             <div key={slot} className="mt-2">
