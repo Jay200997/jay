@@ -5,6 +5,7 @@ export const START_MIGRATION = 'start-2026-11-23';
 /** Gym + knee + mobility plan agreed on 22 Nov 2026. */
 export const PLAN_V2_MIGRATION = 'plan-v2';
 export const CHEAT_MEAL_MIGRATION = 'cheat-meal';
+export const MEAL_GRAMS_MIGRATION = 'meal-grams';
 
 let counter = 0;
 export function uid(prefix = 'id'): string {
@@ -21,15 +22,40 @@ const meal = (slot: MealSlot, name: string, kcal: number, protein: number): Meal
   protein,
 });
 
-// ---- Meals ----
-const breakfast = () => meal('Breakfast', '300 ml milk + 40 g oats + 2 scoops whey + 1 banana', 680, 65);
-const lunch = () => meal('Lunch', '1 serving rice, dal, sabzi, 100 g paneer, salad', 700, 32);
-const lunchRajma = () => meal('Lunch', '1 serving rice, rajma/chole, sabzi, 100 g paneer, salad', 720, 34);
-const lunchBigRice = () => meal('Lunch', '1.5 servings rice, dal, sabzi, 100 g paneer, salad', 800, 34);
-const evening = () => meal('Evening', '3 whole eggs + 1 fruit', 280, 18);
-const dinner = () => meal('Dinner', '7 egg whites + 2 rotis + big bowl of sabzi', 400, 32);
-const dinnerCurd = () => meal('Dinner', '7 egg whites + 1 roti + 200 g curd + big bowl of sabzi', 400, 36);
-const preRunBanana = () => meal('Breakfast', 'Banana before the run', 105, 1);
+// ---- Meals (cooked weights for rice, dal and sabzi) ----
+type MealDef = [MealSlot, string, number, number];
+const M = {
+  breakfast: ['Breakfast', '300 ml toned milk + 40 g oats (dry) + 2 scoops whey (~60 g) + 1 banana (~120 g)', 680, 65],
+  lunch: ['Lunch', '130 g rice (cooked) + 150 g dal (cooked) + 150 g sabzi + 100 g paneer + 100 g salad · 2 tsp oil', 700, 32],
+  lunchRajma: ['Lunch', '130 g rice (cooked) + 150 g rajma/chole (cooked) + 150 g sabzi + 100 g paneer + 100 g salad · 2 tsp oil', 730, 34],
+  lunchBigRice: ['Lunch', '200 g rice (cooked) + 150 g dal (cooked) + 150 g sabzi + 100 g paneer + 100 g salad · 2 tsp oil', 800, 34],
+  evening: ['Evening', '3 whole eggs + 1 fruit (~150 g)', 280, 18],
+  dinner: ['Dinner', '7 egg whites + 2 rotis (25 g atta each, no ghee) + 200 g sabzi · 1 tsp oil', 400, 32],
+  dinnerCurd: ['Dinner', '7 egg whites + 1 roti (25 g atta) + 200 g curd + 200 g sabzi · 1 tsp oil', 440, 38],
+  preRunBanana: ['Breakfast', 'Banana before the run (~120 g)', 105, 1],
+} satisfies Record<string, MealDef>;
+const fromDef = ([slot, name, kcal, protein]: MealDef) => () => meal(slot, name, kcal, protein);
+const breakfast = fromDef(M.breakfast);
+const lunch = fromDef(M.lunch);
+const lunchRajma = fromDef(M.lunchRajma);
+const lunchBigRice = fromDef(M.lunchBigRice);
+const evening = fromDef(M.evening);
+const dinner = fromDef(M.dinner);
+const dinnerCurd = fromDef(M.dinnerCurd);
+const preRunBanana = fromDef(M.preRunBanana);
+
+/** Old meal names (before portions in grams) → updated meal. Used once to update existing plans. */
+export const MEAL_GRAM_UPDATES: Record<string, MealDef> = {
+  '300 ml milk + 40 g oats + 2 scoops whey + 1 banana': M.breakfast,
+  '1 serving rice, dal, sabzi, 100 g paneer, salad': M.lunch,
+  '1 serving rice, rajma/chole, sabzi, 100 g paneer, salad': M.lunchRajma,
+  '1.5 servings rice, dal, sabzi, 100 g paneer, salad': M.lunchBigRice,
+  '3 whole eggs + 1 fruit': M.evening,
+  '7 egg whites + 2 rotis + big bowl of sabzi': M.dinner,
+  '7 egg whites + 1 roti + 200 g curd + big bowl of sabzi': M.dinnerCurd,
+  'Banana before the run': M.preRunBanana,
+};
+
 /** Weekly cheat meal: Saturday dinner from Week 3, on top of the normal dinner. */
 export const cheatMeal = (): Meal => ({
   ...meal('Dinner', 'Cheat meal: one restaurant meal + 1 dessert (keep some protein, go easy on alcohol)', 900, 15),
@@ -220,7 +246,7 @@ export function seedData(): AppData {
     runs: [],
     goals: seedGoals(),
     goalsDone: {},
-    settings: { startDate: DEFAULT_START_DATE, waterTargetMl: 3000, migrations: [START_MIGRATION, PLAN_V2_MIGRATION, CHEAT_MEAL_MIGRATION] },
+    settings: { startDate: DEFAULT_START_DATE, waterTargetMl: 3000, migrations: [START_MIGRATION, PLAN_V2_MIGRATION, CHEAT_MEAL_MIGRATION, MEAL_GRAMS_MIGRATION] },
     checkins: [],
   };
 }

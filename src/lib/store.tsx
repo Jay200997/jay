@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { AppData, DayLog } from './types';
-import { seedData, seedGoals, seedPlan, DEFAULT_START_DATE, START_MIGRATION, PLAN_V2_MIGRATION, CHEAT_MEAL_MIGRATION, cheatMeal } from './seed';
+import { seedData, seedGoals, seedPlan, DEFAULT_START_DATE, START_MIGRATION, PLAN_V2_MIGRATION, CHEAT_MEAL_MIGRATION, cheatMeal, MEAL_GRAMS_MIGRATION, MEAL_GRAM_UPDATES } from './seed';
 
 const STORAGE_KEY = 'fittrack:v1';
 
@@ -42,6 +42,17 @@ function migrate(d: AppData): AppData {
   if (!has(CHEAT_MEAL_MIGRATION)) {
     const plan = out.plan.map((day, i) => (i === 5 && !day.meals.some((m) => m.fromWeek) ? { ...day, meals: [...day.meals, cheatMeal()] } : day));
     mark(CHEAT_MEAL_MIGRATION, { plan });
+  }
+  // Adds gram portions to meals still using the original wording; edited meals are left alone.
+  if (!has(MEAL_GRAMS_MIGRATION)) {
+    const plan = out.plan.map((day) => ({
+      ...day,
+      meals: day.meals.map((m) => {
+        const u = MEAL_GRAM_UPDATES[m.name];
+        return u ? { ...m, name: u[1], kcal: u[2], protein: u[3] } : m;
+      }),
+    }));
+    mark(MEAL_GRAMS_MIGRATION, { plan });
   }
   return out;
 }
@@ -93,7 +104,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const replace = useCallback((d: AppData) => {
     const n = normalize(d);
     const done = n.settings.migrations ?? [];
-    setData({ ...n, settings: { ...n.settings, migrations: [...new Set([...done, START_MIGRATION, PLAN_V2_MIGRATION, CHEAT_MEAL_MIGRATION])] } });
+    setData({ ...n, settings: { ...n.settings, migrations: [...new Set([...done, START_MIGRATION, PLAN_V2_MIGRATION, CHEAT_MEAL_MIGRATION, MEAL_GRAMS_MIGRATION])] } });
   }, []);
   const updateLog = useCallback(
     (key: string, fn: (log: DayLog) => DayLog) =>
