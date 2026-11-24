@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState, type TouchEvent } from 'react';
 import { useStore, emptyLog } from '../lib/store';
 import { addDays, dateKey, daysBetween, formatLong, formatShort, programWeek, weekdayIndex, DAY_NAMES } from '../lib/date';
 import { resolveDetail } from '../lib/seed';
@@ -20,7 +20,35 @@ function mealText(m: Meal): { main: string; note?: string } {
 export default function Today() {
   const { data, updateLog } = useStore();
   const today = dateKey();
-  const [day, setDay] = useState(today);
+  const [day, setDayRaw] = useState(today);
+  const [slide, setSlide] = useState<'left' | 'right' | null>(null);
+  const setDay = (next: string) => {
+    setSlide(next > day ? 'left' : next < day ? 'right' : null);
+    setDayRaw(next);
+  };
+
+  // Swipe left = next day, swipe right = previous day. Only clear, quick, mostly-horizontal swipes count,
+  // so vertical scrolling and the browser's edge-swipe-back gesture are left alone.
+  const touch = useRef<{ x: number; y: number; t: number } | null>(null);
+  const onTouchStart = (e: TouchEvent) => {
+    const el = e.target as HTMLElement;
+    const t = e.touches[0];
+    if (e.touches.length !== 1 || el.closest('input, textarea, select') || t.clientX < 24 || t.clientX > window.innerWidth - 24) {
+      touch.current = null;
+      return;
+    }
+    touch.current = { x: t.clientX, y: t.clientY, t: Date.now() };
+  };
+  const onTouchEnd = (e: TouchEvent) => {
+    const start = touch.current;
+    touch.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8 || Date.now() - start.t > 700) return;
+    setDay(addDays(day, dx < 0 ? 1 : -1));
+  };
   const isToday = day === today;
   const isFuture = day > today;
   const dayNum = daysBetween(data.settings.startDate, day) + 1;
@@ -47,7 +75,12 @@ export default function Today() {
   const lossRate = recentLossRate(data.weights);
 
   return (
-    <>
+    <div
+      key={day}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      className={`space-y-4 ${slide === 'left' ? 'slide-from-right' : slide === 'right' ? 'slide-from-left' : ''}`}
+    >
       <header className="pt-2 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-emerald-400 text-sm font-medium">
@@ -224,7 +257,8 @@ export default function Today() {
       >
         {log.complete ? '✓ Day complete (tap to undo)' : 'Mark day complete'}
       </Button>
-    </>
+      <p className="text-center text-xs text-slate-600">Swipe left or right to change day</p>
+    </div>
   );
 }
 
