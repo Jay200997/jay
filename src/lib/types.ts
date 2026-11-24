@@ -5,6 +5,8 @@ export interface Exercise {
   id: string;
   name: string;
   detail: string; // e.g. "3 × 10–12"
+  /** Optional link to a how-to video; otherwise a YouTube search is used. */
+  video?: string;
 }
 
 export interface Meal {

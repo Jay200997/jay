@@ -14,32 +14,75 @@ export function Card({ title, right, children, className = '' }: { title?: React
   );
 }
 
-export function CheckRow({ checked, onToggle, label, sub, right, strike = true }: { checked: boolean; onToggle: () => void; label: ReactNode; sub?: ReactNode; right?: ReactNode; strike?: boolean }) {
+export function CheckRow({
+  checked,
+  onToggle,
+  label,
+  sub,
+  right,
+  action,
+  strike = true,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+  label: ReactNode;
+  sub?: ReactNode;
+  right?: ReactNode;
+  /** Rendered beside the row, outside the tap-to-tick area (e.g. a video link). */
+  action?: ReactNode;
+  strike?: boolean;
+}) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={checked}
-      className="w-full flex items-center gap-3 min-h-[56px] py-2 px-1 text-left rounded-xl active:bg-slate-800/60 transition-colors"
-    >
-      <span
-        className={`shrink-0 grid place-items-center w-7 h-7 rounded-lg border-2 transition-colors ${
-          checked ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600'
-        }`}
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-pressed={checked}
+        className="flex-1 min-w-0 flex items-center gap-3 min-h-[56px] py-2 px-1 text-left rounded-xl active:bg-slate-800/60 transition-colors"
       >
-        {checked && (
-          <svg viewBox="0 0 24 24" className="w-5 h-5 text-slate-950" fill="none" stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12l5 5 9-10" />
-          </svg>
-        )}
-      </span>
-      <span className="flex-1 min-w-0">
-        <span className={`block leading-snug ${checked && strike ? 'text-slate-500 line-through' : 'text-slate-100'}`}>{label}</span>
-        {sub && <span className="block text-sm text-slate-400 mt-0.5">{sub}</span>}
-      </span>
-      {right && <span className="shrink-0 text-sm text-slate-400 text-right">{right}</span>}
-    </button>
+        <span
+          className={`shrink-0 grid place-items-center w-7 h-7 rounded-lg border-2 transition-colors ${
+            checked ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600'
+          }`}
+        >
+          {checked && (
+            <svg viewBox="0 0 24 24" className="w-5 h-5 text-slate-950" fill="none" stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12l5 5 9-10" />
+            </svg>
+          )}
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className={`block leading-snug ${checked ? (strike ? 'text-slate-500 line-through' : 'text-slate-500') : 'text-slate-100'}`}>{label}</span>
+          {sub && <span className={`block text-xs mt-0.5 leading-snug ${checked ? 'text-slate-600' : 'text-slate-400'}`}>{sub}</span>}
+        </span>
+        {right && <span className="shrink-0 text-sm text-slate-400 text-right">{right}</span>}
+      </button>
+      {action}
+    </div>
   );
+}
+
+/** Small round play button that opens a how-to video in a new tab. */
+export function PlayLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Watch how to do ${label}`}
+      title="Watch how to do it"
+      className="shrink-0 grid place-items-center w-10 h-10 rounded-full bg-slate-800 text-rose-400 active:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-500"
+    >
+      <svg viewBox="0 0 24 24" className="w-4 h-4 translate-x-px" fill="currentColor" aria-hidden="true">
+        <path d="M8 5.5v13a1 1 0 001.5.86l10.5-6.5a1 1 0 000-1.72L9.5 4.64A1 1 0 008 5.5z" />
+      </svg>
+    </a>
+  );
+}
+
+/** Pill for sets × reps. */
+export function Pill({ children }: { children: ReactNode }) {
+  return <span className="inline-block rounded-full bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-300 tabular-nums whitespace-nowrap">{children}</span>;
 }
 
 export function Button({ variant = 'primary', className = '', ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'ghost' | 'danger' | 'soft' }) {

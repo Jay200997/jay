@@ -2,11 +2,20 @@ import { useState } from 'react';
 import { useStore, emptyLog } from '../lib/store';
 import { addDays, dateKey, daysBetween, formatLong, formatShort, programWeek, weekdayIndex, DAY_NAMES } from '../lib/date';
 import { resolveDetail } from '../lib/seed';
-import { MEAL_SLOTS } from '../lib/types';
+import { MEAL_SLOTS, type Meal } from '../lib/types';
 import { currentStreak, missedInARow, recentLossRate, FAST_LOSS_KG_PER_WEEK } from '../lib/stats';
-import { Banner, Button, Card, CheckRow, Input, Progress } from '../ui';
+import { splitName, videoUrl } from '../lib/videos';
+import { Banner, Button, Card, CheckRow, Input, Pill, PlayLink, Progress } from '../ui';
 
 export const exerciseDetail = resolveDetail;
+
+/** "130 g rice (cooked) + 150 g dal (cooked) · 2 tsp oil" → main "130 g rice · 150 g dal", note "2 tsp oil". */
+function mealText(m: Meal): { main: string; note?: string } {
+  const named = splitName(m.name);
+  if (named.note && m.name.includes(': ')) return { main: named.title, note: named.note };
+  const [main, ...rest] = m.name.split(' · ');
+  return { main: main.replace(/ \(cooked\)/g, '').split(' + ').join(' · '), note: rest.join(' · ') || undefined };
+}
 
 export default function Today() {
   const { data, updateLog } = useStore();
@@ -27,6 +36,7 @@ export default function Today() {
   const exDone = plan.exercises.filter((e) => log.checked[e.id]).length;
   const meals = plan.meals.filter((m) => !m.fromWeek || week >= m.fromWeek);
   const food = meals.filter((m) => m.slot !== 'Supplements');
+  const supplements = meals.filter((m) => m.slot === 'Supplements');
   const planned = food.reduce((a, m) => ({ kcal: a.kcal + m.kcal, protein: a.protein + m.protein }), { kcal: 0, protein: 0 });
   const eaten = food
     .filter((m) => log.checked[m.id])
@@ -39,11 +49,11 @@ export default function Today() {
   return (
     <>
       <header className="pt-2 flex items-start justify-between gap-2">
-        <div>
+        <div className="min-w-0">
           <p className="text-emerald-400 text-sm font-medium">
             {dayNum >= 1 ? `Day ${dayNum} · Week ${week}` : `Day 1 is ${formatShort(data.settings.startDate)}`} · {DAY_NAMES[idx]}
           </p>
-          <h1 className="text-2xl font-bold tracking-tight">{plan.title}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-balance">{plan.title}</h1>
           <p className="text-slate-400 text-sm">
             {isToday ? 'Today' : day === addDays(today, 1) ? 'Tomorrow' : formatLong(day)}
             {!isToday && (
@@ -53,57 +63,61 @@ export default function Today() {
             )}
           </p>
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 shrink-0">
           <button aria-label="Previous day" className="w-11 h-11 rounded-xl bg-slate-800 active:bg-slate-700 text-xl" onClick={() => setDay(addDays(day, -1))}>‹</button>
-          <button aria-label="Next day" className="w-11 h-11 rounded-xl bg-slate-800 active:bg-slate-700 text-xl disabled:opacity-30" onClick={() => setDay(addDays(day, 1))}>›</button>
+          <button aria-label="Next day" className="w-11 h-11 rounded-xl bg-slate-800 active:bg-slate-700 text-xl" onClick={() => setDay(addDays(day, 1))}>›</button>
         </div>
       </header>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-400">Streak</p>
-          <p className="text-3xl font-bold">{streak}<span className="text-base font-medium text-slate-400"> {streak === 1 ? 'day' : 'days'}</span></p>
-        </div>
-        <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-400">Workout</p>
-          <p className="text-3xl font-bold">{exDone}<span className="text-base font-medium text-slate-400">/{plan.exercises.length}</span></p>
-        </div>
+      {/* One slim summary strip instead of separate tiles */}
+      <div className="grid grid-cols-3 rounded-2xl bg-slate-900/80 border border-slate-800 divide-x divide-slate-800 text-center">
+        <Stat label="Streak" value={`${streak}`} unit={streak === 1 ? 'day' : 'days'} />
+        <Stat label="Workout" value={`${exDone}`} unit={`/ ${plan.exercises.length}`} />
+        <Stat label="Protein" value={`${eaten.protein}`} unit={`/ ${planned.protein} g`} />
       </div>
 
       {missed >= 2 && (
         <Banner tone="warn">
-          <strong>You've missed {missed} days in a row.</strong> Never miss two in a row — do even 10 minutes today and mark it complete.
+          <strong>You've missed {missed} days in a row.</strong> Never miss two in a row. Do even 10 minutes today and mark it complete.
         </Banner>
       )}
-      {missed === 1 && !data.logs[today]?.complete && (
-        <Banner tone="info">Yesterday was missed. Never miss two in a row — today counts.</Banner>
-      )}
+      {missed === 1 && !data.logs[today]?.complete && <Banner tone="info">Yesterday was missed. Never miss two in a row: today counts.</Banner>}
       {lossRate !== null && lossRate > FAST_LOSS_KG_PER_WEEK && (
         <Banner tone="warn">
-          Weekly average dropped {lossRate.toFixed(2)} kg — faster than {FAST_LOSS_KG_PER_WEEK} kg/week. <strong>Add food to protect muscle.</strong>
+          Weekly average dropped {lossRate.toFixed(2)} kg, faster than {FAST_LOSS_KG_PER_WEEK} kg/week. <strong>Add food to protect muscle.</strong>
         </Banner>
       )}
 
-      <Card title="Workout" right={<span className="text-sm text-slate-400">{exDone}/{plan.exercises.length}</span>}>
-        <div className="divide-y divide-slate-800/70">
-          {plan.exercises.map((e) => (
-            <CheckRow key={e.id} checked={!!log.checked[e.id]} onToggle={() => toggle(e.id)} label={e.name} right={exerciseDetail(e.detail, week)} />
-          ))}
-          {plan.exercises.length === 0 && <p className="text-slate-500 py-2">No exercises — edit in Plan.</p>}
+      <Card title="Workout" right={<span className="text-sm text-slate-400 tabular-nums">{exDone}/{plan.exercises.length}</span>}>
+        <Progress value={exDone} max={plan.exercises.length} />
+        <div className="divide-y divide-slate-800/70 mt-2">
+          {plan.exercises.map((e) => {
+            const { title, note } = splitName(e.name);
+            const url = videoUrl(e);
+            return (
+              <CheckRow
+                key={e.id}
+                checked={!!log.checked[e.id]}
+                onToggle={() => toggle(e.id)}
+                label={title}
+                sub={note}
+                strike={false}
+                right={<Pill>{exerciseDetail(e.detail, week)}</Pill>}
+                action={url ? <PlayLink href={url} label={title} /> : <span className="w-10 shrink-0" aria-hidden="true" />}
+              />
+            );
+          })}
+          {plan.exercises.length === 0 && <p className="text-slate-500 py-2">No exercises. Add some in Plan.</p>}
         </div>
+        <p className="text-xs text-slate-500 mt-2 flex items-center gap-1.5">
+          <span className="text-rose-400" aria-hidden="true">▶</span> opens a how-to video on YouTube
+        </p>
       </Card>
 
-      <Card
-        title="Meals"
-        right={
-          <span className="text-sm text-slate-300 tabular-nums">
-            {eaten.kcal} kcal · {eaten.protein} g
-          </span>
-        }
-      >
-        <div className="space-y-2 mb-3">
+      <Card title="Meals" right={<span className="text-sm text-slate-300 tabular-nums">{eaten.kcal} / {planned.kcal} kcal</span>}>
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <div className="flex justify-between text-xs text-slate-400 mb-1"><span>Calories</span><span className="tabular-nums">{eaten.kcal} / {planned.kcal} kcal</span></div>
+            <div className="flex justify-between text-xs text-slate-400 mb-1"><span>Calories</span><span className="tabular-nums">{Math.round((eaten.kcal / (planned.kcal || 1)) * 100)}%</span></div>
             <Progress value={eaten.kcal} max={planned.kcal} color="bg-amber-400" />
           </div>
           <div>
@@ -111,39 +125,80 @@ export default function Today() {
             <Progress value={eaten.protein} max={planned.protein} color="bg-sky-400" />
           </div>
         </div>
-        {MEAL_SLOTS.map((slot) => {
-          const items = meals.filter((m) => m.slot === slot);
+        <p className="text-xs text-slate-500 mt-2">Rice, dal and sabzi weights are cooked.</p>
+
+        {MEAL_SLOTS.filter((s) => s !== 'Supplements').map((slot) => {
+          const items = food.filter((m) => m.slot === slot);
           if (!items.length) return null;
           return (
-            <div key={slot} className="mt-2">
-              <p className="text-xs uppercase tracking-wide text-slate-500 mt-3 mb-1">{slot}</p>
+            <div key={slot}>
+              <p className="text-[11px] uppercase tracking-wider text-slate-500 mt-4 mb-0.5">{slot}</p>
               <div className="divide-y divide-slate-800/70">
-                {items.map((m) => (
-                  <CheckRow
-                    key={m.id}
-                    checked={!!log.checked[m.id]}
-                    onToggle={() => toggle(m.id)}
-                    label={m.name}
-                    right={slot === 'Supplements' ? undefined : <span className="tabular-nums">{m.kcal} kcal<br />{m.protein} g</span>}
-                  />
-                ))}
+                {items.map((m) => {
+                  const { main, note } = mealText(m);
+                  return (
+                    <CheckRow
+                      key={m.id}
+                      checked={!!log.checked[m.id]}
+                      onToggle={() => toggle(m.id)}
+                      label={main}
+                      sub={note}
+                      strike={false}
+                      right={
+                        <span className="tabular-nums text-xs leading-tight">
+                          <span className="text-slate-300">{m.kcal}</span> kcal
+                          <br />
+                          <span className="text-slate-300">{m.protein}</span> g
+                        </span>
+                      }
+                    />
+                  );
+                })}
               </div>
             </div>
           );
         })}
+
+        {supplements.length > 0 && (
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-slate-500 mt-4 mb-2">Supplements</p>
+            <div className="flex flex-wrap gap-2">
+              {supplements.map((m) => {
+                const on = !!log.checked[m.id];
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggle(m.id)}
+                    className={`min-h-[44px] px-4 rounded-full border text-sm transition-colors ${
+                      on ? 'bg-emerald-500/15 border-emerald-500 text-emerald-300' : 'border-slate-700 text-slate-300 active:bg-slate-800'
+                    }`}
+                  >
+                    {on ? '✓ ' : ''}
+                    {m.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </Card>
 
-      <Card title="Water" right={<span className="text-sm text-slate-300 tabular-nums">{(log.waterMl / 1000).toFixed(2)} / {(target / 1000).toFixed(1)} L</span>}>
+      <Card title="Water & sleep">
+        <div className="flex justify-between text-xs text-slate-400 mb-1">
+          <span>Water</span>
+          <span className="tabular-nums">{(log.waterMl / 1000).toFixed(2)} / {(target / 1000).toFixed(1)} L</span>
+        </div>
         <Progress value={log.waterMl} max={target} color="bg-sky-500" />
         <div className="flex gap-2 mt-3">
-          <Button variant="soft" className="w-16" aria-label="Remove 250 ml" onClick={() => updateLog(day, (l) => ({ ...l, waterMl: Math.max(0, l.waterMl - 250) }))}>−</Button>
+          <Button variant="soft" className="w-14" aria-label="Remove 250 ml" onClick={() => updateLog(day, (l) => ({ ...l, waterMl: Math.max(0, l.waterMl - 250) }))}>−</Button>
           <Button className="flex-1 !bg-sky-500 active:!bg-sky-400" onClick={() => updateLog(day, (l) => ({ ...l, waterMl: l.waterMl + 250 }))}>+250 ml</Button>
         </div>
-      </Card>
-
-      <Card title="Sleep">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mt-4">
+          <label htmlFor="sleep-hours" className="text-sm text-slate-300 shrink-0 w-14">Sleep</label>
           <Input
+            id="sleep-hours"
             type="number"
             inputMode="decimal"
             step="0.25"
@@ -156,9 +211,9 @@ export default function Today() {
               updateLog(day, (l) => ({ ...l, sleepHours: v }));
             }}
           />
-          <span className="text-slate-400 shrink-0">hours</span>
+          <span className="text-slate-400 shrink-0 text-sm">h</span>
         </div>
-        {log.sleepHours !== null && log.sleepHours < 7 && <p className="text-amber-300 text-sm mt-2">Aim for 7–9 h — recovery drives fat loss and muscle retention.</p>}
+        {log.sleepHours !== null && log.sleepHours < 7 && <p className="text-amber-300 text-sm mt-2">Aim for 7–9 h. Recovery drives fat loss and muscle retention.</p>}
       </Card>
 
       {isFuture && <p className="text-center text-sm text-slate-400">Preview of {formatLong(day)}. You can mark it complete on the day.</p>}
@@ -170,5 +225,17 @@ export default function Today() {
         {log.complete ? '✓ Day complete (tap to undo)' : 'Mark day complete'}
       </Button>
     </>
+  );
+}
+
+function Stat({ label, value, unit }: { label: string; value: string; unit: string }) {
+  return (
+    <div className="py-3 px-2">
+      <p className="text-[11px] uppercase tracking-wider text-slate-500">{label}</p>
+      <p className="text-xl font-bold tabular-nums">
+        {value}
+        <span className="text-xs font-medium text-slate-400"> {unit}</span>
+      </p>
+    </div>
   );
 }

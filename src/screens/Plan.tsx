@@ -3,7 +3,8 @@ import { useStore } from '../lib/store';
 import { dateKey, programWeek, weekdayIndex, DAY_NAMES } from '../lib/date';
 import { seedPlan, uid } from '../lib/seed';
 import { MEAL_SLOTS, type DayPlan, type MealSlot } from '../lib/types';
-import { Button, Card, ConfirmButton, Input, ScreenHeader } from '../ui';
+import { Button, Card, ConfirmButton, Input, Pill, PlayLink, ScreenHeader } from '../ui';
+import { splitName, videoUrl } from '../lib/videos';
 import { exerciseDetail } from './Today';
 
 export default function Plan() {
@@ -41,10 +42,21 @@ export default function Plan() {
 
             {isOpen && !editing && (
               <div className="mt-3 space-y-3">
-                <ul className="space-y-1.5">
-                  {day.exercises.map((e) => (
-                    <li key={e.id} className="flex justify-between gap-3 text-sm"><span>{e.name}</span><span className="text-slate-400 shrink-0">{exerciseDetail(e.detail, week)}</span></li>
-                  ))}
+                <ul className="divide-y divide-slate-800/70">
+                  {day.exercises.map((e) => {
+                    const { title, note } = splitName(e.name);
+                    const url = videoUrl(e);
+                    return (
+                      <li key={e.id} className="flex items-center gap-3 py-1.5 text-sm">
+                        <span className="flex-1 min-w-0">
+                          <span className="block">{title}</span>
+                          {note && <span className="block text-xs text-slate-500">{note}</span>}
+                        </span>
+                        <Pill>{exerciseDetail(e.detail, week)}</Pill>
+                        {url ? <PlayLink href={url} label={title} /> : <span className="w-10 shrink-0" aria-hidden="true" />}
+                      </li>
+                    );
+                  })}
                 </ul>
                 <div className="border-t border-slate-800 pt-3 space-y-1.5">
                   {day.meals.map((m) => (
@@ -82,13 +94,19 @@ function DayEditor({ day, onChange }: { day: DayPlan; onChange: (fn: (d: DayPlan
       <div>
         <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">Exercises</p>
         <div className="space-y-2">
-          {day.exercises.map((e, j) => (
-            <div key={e.id} className="flex gap-2">
-              <Input className="flex-[3]" value={e.name} placeholder="Exercise" onChange={(ev) => onChange((d) => ({ ...d, exercises: d.exercises.map((x, k) => (k === j ? { ...x, name: ev.target.value } : x)) }))} />
-              <Input className="flex-[2]" value={e.detail} placeholder="3 × 10" onChange={(ev) => onChange((d) => ({ ...d, exercises: d.exercises.map((x, k) => (k === j ? { ...x, detail: ev.target.value } : x)) }))} />
-              <RemoveBtn onClick={() => onChange((d) => ({ ...d, exercises: d.exercises.filter((_, k) => k !== j) }))} />
-            </div>
-          ))}
+          {day.exercises.map((e, j) => {
+            const set = (patch: Partial<typeof e>) => onChange((d) => ({ ...d, exercises: d.exercises.map((x, k) => (k === j ? { ...x, ...patch } : x)) }));
+            return (
+              <div key={e.id} className="rounded-xl bg-slate-950/50 p-2 space-y-2">
+                <div className="flex gap-2">
+                  <Input className="flex-[3]" value={e.name} placeholder="Exercise" onChange={(ev) => set({ name: ev.target.value })} />
+                  <Input className="flex-[2]" value={e.detail} placeholder="3 × 10" onChange={(ev) => set({ detail: ev.target.value })} />
+                  <RemoveBtn onClick={() => onChange((d) => ({ ...d, exercises: d.exercises.filter((_, k) => k !== j) }))} />
+                </div>
+                <Input type="url" inputMode="url" value={e.video ?? ''} placeholder="Video link (optional, e.g. a YouTube URL)" onChange={(ev) => set({ video: ev.target.value || undefined })} />
+              </div>
+            );
+          })}
         </div>
         <Button variant="soft" className="w-full mt-2" onClick={() => onChange((d) => ({ ...d, exercises: [...d.exercises, { id: uid('ex'), name: '', detail: '' }] }))}>+ Add exercise</Button>
         <p className="text-xs text-slate-500 mt-1">Tip: in the sets field, <code>{'{longrun}'}</code>, <code>{'{intervals}'}</code> and <code>{'{kneereps}'}</code> fill in automatically for the current week.</p>
