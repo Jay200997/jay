@@ -68,4 +68,6 @@ export interface AppData {
   goalsDone: Record<string, boolean>;
   settings: Settings;
   checkins: CheckIn[];
+  /** Date (YYYY-MM-DD) → plan day index (0 = Mon) to use instead of that date's weekday. */
+  dayOverrides: Record<string, number>;
 }

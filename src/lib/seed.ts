@@ -6,6 +6,9 @@ export const START_MIGRATION = 'start-2026-11-23';
 export const PLAN_V2_MIGRATION = 'plan-v2';
 export const CHEAT_MEAL_MIGRATION = 'cheat-meal';
 export const MEAL_GRAMS_MIGRATION = 'meal-grams';
+/** This week only: Wed 25 Nov does Thursday's workout and Thu 26 Nov does Wednesday's. */
+export const SWAP_WEEK1_MIGRATION = 'swap-2026-11-25';
+export const ALL_MIGRATIONS = [START_MIGRATION, PLAN_V2_MIGRATION, CHEAT_MEAL_MIGRATION, MEAL_GRAMS_MIGRATION, SWAP_WEEK1_MIGRATION];
 
 let counter = 0;
 export function uid(prefix = 'id'): string {
@@ -246,8 +249,9 @@ export function seedData(): AppData {
     runs: [],
     goals: seedGoals(),
     goalsDone: {},
-    settings: { startDate: DEFAULT_START_DATE, waterTargetMl: 3000, migrations: [START_MIGRATION, PLAN_V2_MIGRATION, CHEAT_MEAL_MIGRATION, MEAL_GRAMS_MIGRATION] },
+    settings: { startDate: DEFAULT_START_DATE, waterTargetMl: 3000, migrations: [...ALL_MIGRATIONS] },
     checkins: [],
+    dayOverrides: { '2026-11-25': 3, '2026-11-26': 2 },
   };
 }
 

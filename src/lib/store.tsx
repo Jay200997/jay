@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { AppData, DayLog } from './types';
-import { seedData, seedGoals, seedPlan, DEFAULT_START_DATE, START_MIGRATION, PLAN_V2_MIGRATION, CHEAT_MEAL_MIGRATION, cheatMeal, MEAL_GRAMS_MIGRATION, MEAL_GRAM_UPDATES } from './seed';
+import { seedData, seedGoals, seedPlan, DEFAULT_START_DATE, START_MIGRATION, PLAN_V2_MIGRATION, CHEAT_MEAL_MIGRATION, cheatMeal, MEAL_GRAMS_MIGRATION, MEAL_GRAM_UPDATES, SWAP_WEEK1_MIGRATION, ALL_MIGRATIONS } from './seed';
 
 const STORAGE_KEY = 'fittrack:v1';
 
@@ -25,6 +25,7 @@ export function normalize(raw: unknown): AppData {
     // Migrations come only from the stored data, never from the fresh defaults.
     settings: { ...base.settings, ...(r.settings ?? {}), migrations: r.settings?.migrations ?? [] },
     checkins: Array.isArray(r.checkins) ? r.checkins : [],
+    dayOverrides: r.dayOverrides && typeof r.dayOverrides === 'object' ? r.dayOverrides : {},
   };
 }
 
@@ -53,6 +54,9 @@ function migrate(d: AppData): AppData {
       }),
     }));
     mark(MEAL_GRAMS_MIGRATION, { plan });
+  }
+  if (!has(SWAP_WEEK1_MIGRATION)) {
+    mark(SWAP_WEEK1_MIGRATION, { dayOverrides: { '2026-11-25': 3, '2026-11-26': 2, ...out.dayOverrides } });
   }
   return out;
 }
@@ -104,7 +108,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const replace = useCallback((d: AppData) => {
     const n = normalize(d);
     const done = n.settings.migrations ?? [];
-    setData({ ...n, settings: { ...n.settings, migrations: [...new Set([...done, START_MIGRATION, PLAN_V2_MIGRATION, CHEAT_MEAL_MIGRATION, MEAL_GRAMS_MIGRATION])] } });
+    setData({ ...n, settings: { ...n.settings, migrations: [...new Set([...done, ...ALL_MIGRATIONS])] } });
   }, []);
   const updateLog = useCallback(
     (key: string, fn: (log: DayLog) => DayLog) =>

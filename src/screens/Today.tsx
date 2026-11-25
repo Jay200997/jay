@@ -18,7 +18,7 @@ function mealText(m: Meal): { main: string; note?: string } {
 }
 
 export default function Today() {
-  const { data, updateLog } = useStore();
+  const { data, update, updateLog } = useStore();
   const today = dateKey();
   const [day, setDayRaw] = useState(today);
   const [slide, setSlide] = useState<'left' | 'right' | null>(null);
@@ -54,7 +54,24 @@ export default function Today() {
   const dayNum = daysBetween(data.settings.startDate, day) + 1;
 
   const idx = weekdayIndex(day);
-  const plan = data.plan[idx];
+  const planIdxFor = (d: string) => data.dayOverrides[d] ?? weekdayIndex(d);
+  const planIdx = planIdxFor(day);
+  const plan = data.plan[planIdx];
+  const swapped = planIdx !== idx;
+
+  /** Swaps this date's workout and meals with the next date's. Tapping again swaps them back. */
+  const swapWithTomorrow = () => {
+    const next = addDays(day, 1);
+    const a = planIdxFor(day);
+    const b = planIdxFor(next);
+    update((d) => {
+      const o = { ...d.dayOverrides };
+      const put = (date: string, i: number) => (i === weekdayIndex(date) ? delete o[date] : (o[date] = i));
+      put(day, b);
+      put(next, a);
+      return { ...d, dayOverrides: o };
+    });
+  };
   const log = data.logs[day] ?? emptyLog();
   const week = programWeek(data.settings.startDate, day);
   const target = data.settings.waterTargetMl;
@@ -108,6 +125,19 @@ export default function Today() {
         <Stat label="Workout" value={`${exDone}`} unit={`/ ${plan.exercises.length}`} />
         <Stat label="Protein" value={`${eaten.protein}`} unit={`/ ${planned.protein} g`} />
       </div>
+
+      {day >= today && (
+        <div className="flex items-center justify-between gap-2 -mt-1">
+          <p className="text-xs text-slate-500 min-w-0">{swapped ? `Swapped: usually ${data.plan[idx].title}` : ''}</p>
+          <button
+            type="button"
+            onClick={swapWithTomorrow}
+            className="shrink-0 min-h-[40px] px-3 rounded-full border border-slate-700 text-xs text-slate-300 active:bg-slate-800"
+          >
+            ⇄ Swap with tomorrow
+          </button>
+        </div>
+      )}
 
       {missed >= 2 && (
         <Banner tone="warn">
